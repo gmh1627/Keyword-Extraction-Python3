@@ -37,7 +37,7 @@ def getkeywords_kmeans(data,topK):
 
     result = pd.concat([words, labels ,distances], axis=1) # 拼接词语与其对应中心点的距离
     result = result.sort_values(by="dis",ascending = True) # 按照距离大小进行升序排序
-
+    """
     # 将用于聚类的数据的特征维度降到2维
     pca = PCA(n_components=2)
     new_pca = pd.DataFrame(pca.fit_transform(new_df))
@@ -51,7 +51,7 @@ def getkeywords_kmeans(data,topK):
     plt.plot(d[0], d[1], 'b*')
     plt.gcf().savefig('kmeans.png')
     plt.show()
-
+    """
     # 抽取排名前topK个词语作为文本关键词
     wordlist = np.array(result['word']) # 选择词汇列并转成数组格式
     word_split = [wordlist[x] for x in range(0,topK)] # 抽取前topK个词汇
