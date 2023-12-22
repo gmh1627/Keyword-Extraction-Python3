@@ -1,5 +1,3 @@
-#!/usr/bin/python
-# coding=utf-8
 # 采用Word2Vec词聚类方法抽取关键词1——获取文本词向量表示
 import warnings
 warnings.filterwarnings(action='ignore', category=UserWarning, module='gensim')  # 忽略警告
@@ -18,7 +16,7 @@ def getWordVecs(wordList, model):
         word = word.replace('\n', '')
         try:
             if word in model:  # 模型中存在该词的向量表示
-                name.append(word.encode('utf8'))
+                name.append(word)
                 vecs.append(model[word])
         except KeyError:
             continue
@@ -53,7 +51,7 @@ def buildAllWordsVecs(data, stopkey, model):
         # 词向量写入csv文件，每个词400维
         data_vecs = pd.DataFrame(wordvecs)
         data_vecs.to_csv('result/vecs/wordvecs_' + str(id) + '.csv', index=False)
-        print "document ", id, " well done."
+        print("document ", id, " well done.")
 
 def main():
     # 读取数据集
@@ -68,4 +66,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
