@@ -85,14 +85,14 @@ TF-IDF的主要思想是，如果某个词语在一篇文章中出现的频率�
 
 计算公式如下：
 
-![TF-IDF计算公式](http://upload-images.jianshu.io/upload_images/5189322-7d11ccded914ed34.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![TF-IDF计算公式](1.webp)
 
 
 ## 4.2 TF-IDF文本关键词抽取方法流程
 
   由以上可知，TF-IDF是对文本所有候选关键词进行加权处理，根据权值对关键词进行排序。假设D<sub>n</sub>为测试语料的大小，该算法的关键词抽取步骤如下所示：
 
-（1） 对于给定的文本D进行分词、词性标注和去除停用词等数据预处理操作。本分采用结巴分词，保留'n','nz','v','vd','vn','l','a','d'这几个词性的词语，最终得到n个候选关键词，即D=[t1,t2,…,tn]  ；
+（1） 对于给定的文本D进行分词、词性标注和去除停用词等数据预处理操作。本文采用jieba分词，保留'n','nz','v','vd','vn','l','a','d'这几个词性的词语('n': 名词,'nz': 其他专有名词,'v': 动词,'vd': 副动词,'vn': 名动词,'l': 习用语,'a': 形容词,'d': 副词)，最终得到n个候选关键词，即D=[t1,t2,…,tn]  ；
 
 （2） 计算词语t<sub>i</sub> 在文本D中的词频；
 
@@ -132,7 +132,7 @@ TF-IDF的主要思想是，如果某个词语在一篇文章中出现的频率�
 
 最终运行结果如下图所示。
 
-![TF-IDF方法运行结果](http://upload-images.jianshu.io/upload_images/5189322-96ca145abe2b0c60.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![TF-IDF方法运行结果](1.png)
 
 
 # 5 基于TextRank的文本关键词抽取方法
@@ -149,7 +149,7 @@ PageRank算法是Google的创始人拉里·佩奇和谢尔盖·布林于1998年�
 
 一般情况下，一个网页的PageRank值（PR）计算公式如下所示：
 
-![PageRank计算公式](http://upload-images.jianshu.io/upload_images/5189322-665d9cca6259352b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![PageRank计算公式](3.webp)
 
 
 其中，PR(Pi)是第i个网页的重要性排名即PR值；ɑ是阻尼系数，一般设置为0.85；N是网页总数；Mpi 是所有对第i个网页有出链的网页集合；L(Pj)是第j 个网页的出链数目。
@@ -162,7 +162,7 @@ TextRank算法是Mihalcea和Tarau于2004年在研究自动摘要提取过程中�
 
 基于TextRank的文本关键词抽取是利用局部词汇关系，即共现窗口，对候选关键词进行排序，该方法的步骤如下：
 
-（1） 对于给定的文本D进行分词、词性标注和去除停用词等数据预处理操作。本分采用结巴分词，保留'n','nz','v','vd','vn','l','a','d'这几个词性的词语，最终得到n个候选关键词，即D=[t1,t2,…,tn] ；
+（1） 对于给定的文本D进行分词、词性标注和去除停用词等数据预处理操作。本文采用结巴分词，保留'n','nz','v','vd','vn','l','a','d'这几个词性的词语，最终得到n个候选关键词，即D=[t1,t2,…,tn] ；
 
 （2） 构建候选关键词图G=(V,E)，其中V为节点集，由候选关键词组成，并采用共现关系构造任两点之间的边，两个节点之间仅当它们对应的词汇在长度为K的窗口中共现则存在边，K表示窗口大小即最多共现K个词汇；
 
@@ -188,7 +188,7 @@ TextRank算法是Mihalcea和Tarau于2004年在研究自动摘要提取过程中�
 
 最终运行结果如下图所示。
 
-![TextRank方法运行结果](http://upload-images.jianshu.io/upload_images/5189322-37e241e102df9f5c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![TextRank方法运行结果](2.png)
 
 # 6 基于Word2Vec词聚类的文本关键词抽取方法
 ## 6.1 Word2Vec词向量表示
@@ -228,7 +228,7 @@ K-Means是一种常见的基于原型的聚类技术，本文选择该算法作�
 
 步骤（4）中需要人为给定聚类的个数，本文测试语料是汽车行业的专利文本，因此只需聚为1类，各位可根据自己的数据情况进行调整；步骤（5）中计算各词语与聚类中心的距离，常见的方法有欧式距离和曼哈顿距离，本文采用的是欧式距离，计算公式如下：
 
-![欧式距离计算公式](http://upload-images.jianshu.io/upload_images/5189322-19edf7ff41c46c22.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![欧式距离计算公式](5.webp)
 
 
 ## 6.4 代码实现
@@ -255,7 +255,7 @@ K-Means是一种常见的基于原型的聚类技术，本文选择该算法作�
 
   最终运行结果如下图所示。
 
-![Word2Vec词聚类方法运行结果](http://upload-images.jianshu.io/upload_images/5189322-f51143cb3921005d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![Word2Vec词聚类方法运行结果](6.webp)
 
 # 7 结语
 	
@@ -282,7 +282,3 @@ K-Means是一种常见的基于原型的聚类技术，本文选择该算法作�
 [7] [http://www.doc88.com/p-4711540891452.html](http://www.doc88.com/p-4711540891452.html)
 
 [8] 夏天. 词向量聚类加权TextRank的关键词抽取[J]. 现代图书情报技术, 2017, 1(2):28-34.
-
-[9]吴军.数学之美（第二版）.
-
-
