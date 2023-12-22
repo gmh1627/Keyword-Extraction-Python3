@@ -1,5 +1,3 @@
-#!/usr/bin/python
-# coding=utf-8
 # 采用Word2Vec词聚类方法抽取关键词2——根据候选关键词的词向量进行聚类分析
 import sys,os
 from sklearn.cluster import KMeans
@@ -8,13 +6,14 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import os
 
 # 对词向量采用K-means聚类抽取TopK关键词
 def getkeywords_kmeans(data,topK):
     words = data["word"] # 词汇
-    vecs = data.ix[:,1:] # 向量表示
+    vecs = data.iloc[:,1:] # 向量表示
 
-    kmeans = KMeans(n_clusters=1,random_state=10).fit(vecs)
+    kmeans = KMeans(n_clusters=1,n_init=10,random_state=10).fit(vecs)
     labels = kmeans.labels_ #类别结果标签
     labels = pd.DataFrame(labels,columns=['label'])
     new_df = pd.concat([labels,vecs],axis=1)
@@ -40,18 +39,18 @@ def getkeywords_kmeans(data,topK):
     result = result.sort_values(by="dis",ascending = True) # 按照距离大小进行升序排序
 
     # 将用于聚类的数据的特征维度降到2维
-    # pca = PCA(n_components=2)
-    # new_pca = pd.DataFrame(pca.fit_transform(new_df))
-    # print new_pca
+    pca = PCA(n_components=2)
+    new_pca = pd.DataFrame(pca.fit_transform(new_df))
+    print(new_pca)
     # 可视化
-    # d = new_pca[new_df['label'] == 0]
-    # plt.plot(d[0],d[1],'r.')
-    # d = new_pca[new_df['label'] == 1]
-    # plt.plot(d[0], d[1], 'go')
-    # d = new_pca[new_df['label'] == 2]
-    # plt.plot(d[0], d[1], 'b*')
-    # # plt.gcf().savefig('kmeans.png')
-    # plt.show()
+    d = new_pca[new_df['label'] == 0]
+    plt.plot(d[0],d[1],'r.')
+    d = new_pca[new_df['label'] == 1]
+    plt.plot(d[0], d[1], 'go')
+    d = new_pca[new_df['label'] == 2]
+    plt.plot(d[0], d[1], 'b*')
+    plt.gcf().savefig('kmeans.png')
+    plt.show()
 
     # 抽取排名前topK个词语作为文本关键词
     wordlist = np.array(result['word']) # 选择词汇列并转成数组格式
@@ -62,7 +61,8 @@ def getkeywords_kmeans(data,topK):
 def main():
     # 读取数据集
     dataFile = 'data/sample_data.csv'
-    articleData = pd.read_csv(dataFile)
+    articleData = pd.read_csv(dataFile,encoding='utf-8')
+    
     ids, titles, keys = [], [], []
 
     rootdir = "result/vecs" # 词向量文件根目录
@@ -74,6 +74,7 @@ def main():
         if os.path.isfile(path):
             data = pd.read_csv(path, encoding='utf-8') # 读取词向量文件数据
             artile_keys = getkeywords_kmeans(data,10) # 聚类算法得到当前文件的关键词
+            
             # 根据文件名获得文章id以及标题
             (shortname, extension) = os.path.splitext(filename) # 得到文件名和文件扩展名
             t = shortname.split("_")
@@ -82,13 +83,11 @@ def main():
             artile_tit = list(artile_tit)[0] # series转成字符串
             ids.append(article_id)
             titles.append(artile_tit)
-            keys.append(artile_keys.encode("utf-8"))
+            keys.append(artile_keys)
     # 所有结果写入文件
     result = pd.DataFrame({"id": ids, "title": titles, "key": keys}, columns=['id', 'title', 'key'])
     result = result.sort_values(by="id",ascending=True) # 排序
-    result.to_csv("result/keys_word2vec.csv", index=False)
+    result.to_csv("result/keys_word2vec.csv", index=False,encoding='utf-8')
 
 if __name__ == '__main__':
     main()
-
-
