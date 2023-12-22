@@ -1,5 +1,3 @@
-#!/usr/bin/python
-# coding=utf-8
 # 采用TextRank方法提取文本关键词
 import sys
 import pandas as pd
@@ -13,28 +11,30 @@ import jieba.analyse
 """
 
 # 处理标题和摘要，提取关键词
+#@profile
 def getKeywords_textrank(data,topK):
     idList,titleList,abstractList = data['id'],data['title'],data['abstract']
     ids, titles, keys = [], [], []
     for index in range(len(idList)):
         text = '%s。%s' % (titleList[index], abstractList[index]) # 拼接标题和摘要
         jieba.analyse.set_stop_words("data/stopWord.txt") # 加载自定义停用词表
-        print "\"",titleList[index],"\"" , " 10 Keywords - TextRank :"
+        print("\"",titleList[index],"\" ,  10 Keywords - TextRank :")
         keywords = jieba.analyse.textrank(text, topK=topK, allowPOS=('n','nz','v','vd','vn','l','a','d'))  # TextRank关键词提取，词性筛选
         word_split = " ".join(keywords)
-        print word_split
-        keys.append(word_split.encode("utf-8"))
+        print(word_split)
+        keys.append(word_split)
         ids.append(idList[index])
         titles.append(titleList[index])
 
     result = pd.DataFrame({"id": ids, "title": titles, "key": keys}, columns=['id', 'title', 'key'])
     return result
 
+#@profile
 def main():
     dataFile = 'data/sample_data.csv'
-    data = pd.read_csv(dataFile)
+    data = pd.read_csv(dataFile,encoding='utf-8')
     result = getKeywords_textrank(data,10)
-    result.to_csv("result/keys_TextRank.csv",index=False)
+    result.to_csv("result/keys_TextRank.csv",index=False,encoding='utf-8')
 
 if __name__ == '__main__':
     main()
