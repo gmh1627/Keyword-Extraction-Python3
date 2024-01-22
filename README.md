@@ -28,39 +28,26 @@
 
 ##### （1）Jieba
 
-  目前使用最为广泛的中文分词组件。下载地址：https://pypi.python.org/pypi/jieba/
-
+  目前使用最为广泛的中文分词组件。
 ##### （2）Gensim
 
-  用于主题模型、文档索引和大型语料相似度索引的python库，主要用于自然语言处理（NLP）和信息检索（IR）。下载地址：[https://pypi.python.org/pypi/gensim](https://pypi.python.org/pypi/gensim)
-
-  本实例中的维基中文语料处理和中文词向量模型构建需要用到该模块。
+  用于主题模型、文档索引和大型语料相似度索引的python库，主要用于自然语言处理（NLP）和信息检索（IR）。 本实例中的维基中文语料处理和中文词向量模型构建需要用到该模块。
 
 ##### （3）Pandas
 
-  用于高效处理大型数据集、执行数据分析任务的python库，是基于Numpy的工具包。
-
-下载地址：https://pypi.python.org/pypi/pandas/0.20.1
+  用于高效处理大型数据集、执行数据分析任务的python库，是基于Numpy的工具包。安装方法：pip install pandas。
 
 ##### （4）Numpy
 
   用于存储和处理大型矩阵的工具包。
 
-下载地址：https://pypi.python.org/pypi/numpy
-
 ##### （5）Scikit-learn
 
-  用于机器学习的python工具包，python模块引用名字为sklearn，安装前还需要Numpy和Scipy两个Python库。
-
-官网地址：http://scikit-learn.org/stable/
-
-本实例中主要用到了该模块中的feature_extraction、KMeans（k-means聚类算法）和PCA（pac降维算法）。
+  用于机器学习的python工具包，python模块引用名字为sklearn，安装前还需要Numpy和Scipy两个Python库。本实例中主要用到了该模块中的feature_extraction、KMeans（k-means聚类算法）和PCA（pac降维算法）。
 
 ##### （6）Matplotlib
 
  Matplotlib是一个python的图形框架，用于绘制二维图形。
-
-下载地址：https://pypi.python.org/pypi/matplotlib
 
 # 3 数据准备
 
@@ -197,7 +184,7 @@ TextRank算法是Mihalcea和Tarau于2004年在研究自动摘要提取过程中�
 
 Word2Vec是当时在Google任职的Mikolov等人于2013年发布的一款词向量训练工具，一经发布便在自然语言处理领域得到了广泛的应用。该工具利用浅层神经网络模型自动学习词语在语料库中的出现情况，把词语嵌入到一个高维的空间中，通常在100-500维，在新的高维空间中词语被表示为词向量的形式。与传统的文本表示方式相比，Word2Vec生成的词向量表示，词语之间的语义关系在高维空间中得到了较好的体现，即语义相近的词语在高维空间中的距离更近；同时，使用词向量避免了词语表示的“维度灾难”问题。
 
-就实际操作而言，特征词向量的抽取是基于已经训练好的词向量模型，词向量模型的训练需要海量的语料才能达到较好的效果，而wiki中文语料是公认的大型中文语料，本文拟从wiki中文语料生成的词向量中抽取本文语料的特征词向量。Wiki中文语料的Word2vec模型训练在之前写过的一篇文章“利用Python实现wiki中文语料的word2vec模型构建”（ https://github.com/gmh1627/Wiki_Zh_Word2vec_Python3）中做了详尽的描述，在此不赘述。即本文从文章最后得到的文件“wiki.zh.text.vector”中抽取候选关键词的词向量作为聚类模型的输入。
+就实际操作而言，特征词向量的抽取是基于已经训练好的词向量模型，词向量模型的训练需要海量的语料才能达到较好的效果，而wiki中文语料是公认的大型中文语料，本文拟从wiki中文语料生成的词向量中抽取本文语料的特征词向量。Wiki中文语料的Word2vec模型训练在文章“利用Python实现wiki中文语料的word2vec模型构建”(https://github.com/gmh1627/Wiki_Zh_Word2vec_Python3)中做了详尽的描述，在此不赘述。即本文从文章最后得到的文件“wiki.zh.text.vector”中抽取候选关键词的词向量作为聚类模型的输入。
 
 另外，在阅读资料的过程中发现，有些十分专业或者生僻的词语可能wiki中文语料中并未包含，为了提高语料的质量，可新增实验所需的样本语料一起训练，笔者认为这是一种十分可行的方式。本例中为了简便并未采取这种方法，各位可参考此种方法根据自己的实际情况进行调整。
 
@@ -214,7 +201,7 @@ K-Means是一种常见的基于原型的聚类技术，本文选择该算法作�
 
 假设D<sub>n</sub>为测试语料的大小，使用该方法进行文本关键词抽取的步骤如下所示：
 
-（1） 对Wiki中文语料进行Word2vec模型训练，参考我的文章“利用Python实现wiki中文语料的word2vec模型构建”（ http://www.jianshu.com/p/ec27062bd453 ），得到词向量文件“wiki.zh.text.vector”；
+（1） 对Wiki中文语料进行Word2vec模型训练，参考文章“利用Python实现wiki中文语料的word2vec模型构建”(http://www.jianshu.com/p/ec27062bd453)，得到词向量文件“wiki.zh.text.vector”；
 
 （2） 对于给定的文本D进行分词、词性标注、去重和去除停用词等数据预处理操作。本分采用结巴分词，保留'n','nz','v','vd','vn','l','a','d'这几个词性的词语，最终得到n个候选关键词，即D=[t1,t2,…,tn] ；
 
