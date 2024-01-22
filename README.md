@@ -201,7 +201,7 @@ K-Means是一种常见的基于原型的聚类技术，本文选择该算法作�
 
 假设D<sub>n</sub>为测试语料的大小，使用该方法进行文本关键词抽取的步骤如下所示：
 
-（1） 对Wiki中文语料进行Word2vec模型训练，参考文章“利用Python实现wiki中文语料的word2vec模型构建”(http://www.jianshu.com/p/ec27062bd453)，得到词向量文件“wiki.zh.text.vector”；
+（1） 对Wiki中文语料进行Word2vec模型训练，参考文章“利用Python实现wiki中文语料的word2vec模型构建”(http://www.jianshu.com/p/ec27062bd453) ,得到词向量文件“wiki.zh.text.vector”；
 
 （2） 对于给定的文本D进行分词、词性标注、去重和去除停用词等数据预处理操作。本分采用结巴分词，保留'n','nz','v','vd','vn','l','a','d'这几个词性的词语，最终得到n个候选关键词，即D=[t1,t2,…,tn] ；
 
