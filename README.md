@@ -117,6 +117,90 @@ TF-IDF的主要思想是，如果某个词语在一篇文章中出现的频率�
 
 （10）将最终结果写入文件keys_TFIDF.csv中。
 
+源代码如下：
+
+	# 采用TF-IDF方法提取文本关键词
+	# http://scikit-learn.org/stable/modules/feature_extraction.html#tfidf-term-weighting
+	import sys,codecs
+	import pandas as pd
+	import numpy as np
+	import jieba.posseg
+	import jieba.analyse
+	from sklearn import feature_extraction
+	from sklearn.feature_extraction.text import TfidfTransformer
+	from sklearn.feature_extraction.text import CountVectorizer
+	"""
+	       TF-IDF权重：
+	           1、CountVectorizer 构建词频矩阵
+	           2、TfidfTransformer 构建tfidf权值计算
+	           3、文本的关键字
+	           4、对应的tfidf矩阵
+	"""
+	# 数据预处理操作：分词，去停用词，词性筛选
+	def dataPrepos(text, stopkey):
+	    l = []
+	    pos = ['n', 'nz', 'v', 'vd', 'vn', 'l', 'a', 'd']  # 定义选取的词性
+	    seg = jieba.posseg.cut(text)  # 分词
+	    for i in seg:
+	        if i.word not in stopkey and i.flag in pos:  # 去停用词 + 词性筛选
+	            l.append(i.word)
+	    return l
+	
+	# tf-idf获取文本top10关键词
+	#@profile
+	def getKeywords_tfidf(data,stopkey,topK):
+	    idList, titleList, abstractList = data['id'], data['title'], data['abstract']
+	    corpus = [] # 将所有文档输出到一个list中，一行就是一个文档
+	    for index in range(len(idList)):
+	        text = '%s。%s' % (titleList[index], abstractList[index]) # 拼接标题和摘要
+	        text = dataPrepos(text,stopkey) # 文本预处理
+	        text = " ".join(text) # 连接成字符串，空格分隔
+	        corpus.append(text)
+	    # 1、构建词频矩阵，将文本中的词语转换成词频矩阵
+	    vectorizer = CountVectorizer()
+	    X = vectorizer.fit_transform(corpus) # 词频矩阵,a[i][j]:表示j词在第i个文本中的词频
+	    # 2、统计每个词的tf-idf权值
+	    transformer = TfidfTransformer()
+	    tfidf = transformer.fit_transform(X)
+	    # 3、获取词袋模型中的关键词
+	    word = vectorizer.get_feature_names_out()
+	    # 4、获取tf-idf矩阵，a[i][j]表示j词在i篇文本中的tf-idf权重
+	    weight = tfidf.toarray()
+	    # 5、打印词语权重
+	    ids, titles, keys = [], [], []
+	    for i in range(len(weight)):
+	        print("-------这里输出第", i+1 , "篇文本的词语tf-idf------")
+	        ids.append(idList[i])
+	        titles.append(titleList[i])
+	        df_word,df_weight = [],[] # 当前文章的所有词汇列表、词汇对应权重列表
+	        for j in range(len(word)):
+	            print (word[j],weight[i][j])
+	            df_word.append(word[j])
+	            df_weight.append(weight[i][j])
+	        df_word = pd.DataFrame(df_word,columns=['word'])
+	        df_weight = pd.DataFrame(df_weight,columns=['weight'])
+	        word_weight = pd.concat([df_word, df_weight], axis=1) # 拼接词汇列表和权重列表
+	        word_weight = word_weight.sort_values(by="weight",ascending = False) # 按照权重值降序排列
+	        keyword = np.array(word_weight['word']) # 选择词汇列并转成数组格式
+	        word_split = [keyword[x] for x in range(0,topK)] # 抽取前topK个词汇作为关键词
+	        word_split = " ".join(word_split)
+	        keys.append(word_split)
+	    result = pd.DataFrame({"id": ids, "title": titles, "key": keys},columns=['id','title','key'])
+	    return result
+	
+	def main():
+	    # 读取数据集
+	    dataFile = 'data/sample_data.csv'
+	    data = pd.read_csv(dataFile)
+	    # 停用词表
+	    stopkey = [w.strip() for w in codecs.open('data/stopWord.txt', 'r', encoding='utf-8').readlines()]
+	    # tf-idf关键词抽取
+	    result = getKeywords_tfidf(data,stopkey,10)
+	    result.to_csv("result/keys_TFIDF.csv",index=False)
+	
+	if __name__ == '__main__':
+	    main()
+
 最终运行结果如下图所示。
 
 ![TF-IDF方法运行结果](1.png)
@@ -126,9 +210,7 @@ TF-IDF的主要思想是，如果某个词语在一篇文章中出现的频率�
 
 ## 5.1 PageRank算法思想
 
-TextRank算法是基于PageRank算法的，因此，在介绍TextRank前不得不了解一下PageRank算法。
-
-PageRank算法是Google的创始人拉里·佩奇和谢尔盖·布林于1998年在斯坦福大学读研究生期间发明的，是用于根据网页间相互的超链接来计算网页重要性的技术。该算法借鉴了学术界评判学术论文重要性的方法，即查看论文的被引用次数。基于以上想法，PageRank算法的核心思想是，认为网页重要性由两部分组成：
+TextRank算法是基于PageRank算法的，PageRank算法是Google的创始人拉里·佩奇和谢尔盖·布林于1998年在斯坦福大学读研究生期间发明的，是用于根据网页间相互的超链接来计算网页重要性的技术。该算法借鉴了学术界评判学术论文重要性的方法，即查看论文的被引用次数。基于以上想法，PageRank算法的核心思想是，认为网页重要性由两部分组成：
 
 ① 如果一个网页被大量其他网页链接到说明这个网页比较重要，即被链接网页的数量；
 
@@ -173,6 +255,46 @@ TextRank算法是Mihalcea和Tarau于2004年在研究自动摘要提取过程中�
 
 （5）将最终结果写入文件keys_TextRank.csv中。
 
+源代码如下：
+
+	# 采用TextRank方法提取文本关键词
+	import sys
+	import pandas as pd
+	import jieba.analyse
+	"""
+	       TextRank权重：
+	
+	            1、将待抽取关键词的文本进行分词、去停用词、筛选词性
+	            2、以固定窗口大小(默认为5，通过span属性调整)，词之间的共现关系，构建图
+	            3、计算图中节点的PageRank，注意是无向带权图
+	"""
+	
+	# 处理标题和摘要，提取关键词
+	def getKeywords_textrank(data,topK):
+	    idList,titleList,abstractList = data['id'],data['title'],data['abstract']
+	    ids, titles, keys = [], [], []
+	    for index in range(len(idList)):
+	        text = '%s。%s' % (titleList[index], abstractList[index]) # 拼接标题和摘要
+	        jieba.analyse.set_stop_words("data/stopWord.txt") # 加载自定义停用词表
+	        print("\"",titleList[index],"\" ,  10 Keywords - TextRank :")
+	        keywords = jieba.analyse.textrank(text, topK=topK, allowPOS=('n','nz','v','vd','vn','l','a','d'))  # TextRank关键词提取，词性筛选
+	        word_split = " ".join(keywords)
+	        print(word_split)
+	        keys.append(word_split)
+	        ids.append(idList[index])
+	        titles.append(titleList[index])
+	
+	    result = pd.DataFrame({"id": ids, "title": titles, "key": keys}, columns=['id', 'title', 'key'])
+	    return result
+	
+	def main():
+	    dataFile = 'data/sample_data.csv'
+	    data = pd.read_csv(dataFile,encoding='utf-8')
+	    result = getKeywords_textrank(data,10)
+	    result.to_csv("result/keys_TextRank.csv",index=False,encoding='utf-8')
+	
+	if __name__ == '__main__':
+	    main()
 最终运行结果如下图所示。
 
 ![TextRank方法运行结果](2.png)
@@ -184,7 +306,7 @@ TextRank算法是Mihalcea和Tarau于2004年在研究自动摘要提取过程中�
 
 Word2Vec是当时在Google任职的Mikolov等人于2013年发布的一款词向量训练工具，一经发布便在自然语言处理领域得到了广泛的应用。该工具利用浅层神经网络模型自动学习词语在语料库中的出现情况，把词语嵌入到一个高维的空间中，通常在100-500维，在新的高维空间中词语被表示为词向量的形式。与传统的文本表示方式相比，Word2Vec生成的词向量表示，词语之间的语义关系在高维空间中得到了较好的体现，即语义相近的词语在高维空间中的距离更近；同时，使用词向量避免了词语表示的“维度灾难”问题。
 
-就实际操作而言，特征词向量的抽取是基于已经训练好的词向量模型，词向量模型的训练需要海量的语料才能达到较好的效果，而wiki中文语料是公认的大型中文语料，本文拟从wiki中文语料生成的词向量中抽取本文语料的特征词向量。Wiki中文语料的Word2vec模型训练在文章“利用Python实现wiki中文语料的word2vec模型构建”(https://github.com/gmh1627/Wiki_Zh_Word2vec_Python3)中做了详尽的描述，在此不赘述。即本文从文章最后得到的文件“wiki.zh.text.vector”中抽取候选关键词的词向量作为聚类模型的输入。
+就实际操作而言，特征词向量的抽取是基于已经训练好的词向量模型，词向量模型的训练需要海量的语料才能达到较好的效果，而wiki中文语料是公认的大型中文语料，本文拟从wiki中文语料生成的词向量中抽取本文语料的特征词向量。Wiki中文语料的Word2vec模型训练在文章“利用Python实现wiki中文语料的word2vec模型构建”(https://github.com/gmh1627/Wiki_Zh_Word2vec_Python3) 中做了详尽的描述，在此不赘述。即本文从文章最后得到的文件“wiki.zh.text.vector”中抽取候选关键词的词向量作为聚类模型的输入。
 
 另外，在阅读资料的过程中发现，有些十分专业或者生僻的词语可能wiki中文语料中并未包含，为了提高语料的质量，可新增实验所需的样本语料一起训练，笔者认为这是一种十分可行的方式。本例中为了简便并未采取这种方法，各位可参考此种方法根据自己的实际情况进行调整。
 
@@ -194,14 +316,13 @@ Word2Vec是当时在Google任职的Mikolov等人于2013年发布的一款词向�
 	
 K-Means是一种常见的基于原型的聚类技术，本文选择该算法作为词聚类的方法。其算法思想是：首先随机选择K个点作为初始质心，K为用户指定的所期望的簇的个数，通过计算每个点到各个质心的距离，将每个点指派到最近的质心形成K个簇，然后根据指派到簇的点重新计算每个簇的质心，重复指派和更新质心的操作，直到簇不发生变化或达到最大的迭代次数则停止。
 
-
 ## 6.3 Word2Vec词聚类文本关键词抽取方法流程
 
  Word2Vec词聚类文本关键词抽取方法的主要思路是对于用词向量表示的文本词语，通过K-Means算法对文章中的词进行聚类，选择聚类中心作为文章的一个主要关键词，计算其他词与聚类中心的距离即相似度，选择topN个距离聚类中心最近的词作为文本关键词，而这个词间相似度可用Word2Vec生成的向量计算得到。
 
 假设D<sub>n</sub>为测试语料的大小，使用该方法进行文本关键词抽取的步骤如下所示：
 
-（1） 对Wiki中文语料进行Word2vec模型训练，参考文章“利用Python实现wiki中文语料的word2vec模型构建”(http://www.jianshu.com/p/ec27062bd453) ,得到词向量文件“wiki.zh.text.vector”；
+（1） 对Wiki中文语料进行Word2vec模型训练，参考文章“利用Python实现wiki中文语料的word2vec模型构建”(https://github.com/gmh1627/Wiki_Zh_Word2vec_Python3) ,得到词向量文件“wiki.zh.text.vector”；
 
 （2） 对于给定的文本D进行分词、词性标注、去重和去除停用词等数据预处理操作。本分采用结巴分词，保留'n','nz','v','vd','vn','l','a','d'这几个词性的词语，最终得到n个候选关键词，即D=[t1,t2,…,tn] ；
 
@@ -239,6 +360,171 @@ K-Means是一种常见的基于原型的聚类技术，本文选择该算法作�
 （7）按照得到的距离升序排列，选取排名前topN个词作为文本关键词，并写入数据框中；
 
 （8）将最终结果写入文件keys_word2vec.csv中。
+源代码1如下：
+
+	# 采用Word2Vec词聚类方法抽取关键词1——获取文本词向量表示
+	import warnings
+	warnings.filterwarnings(action='ignore', category=UserWarning, module='gensim')  # 忽略警告
+	import sys, codecs
+	import pandas as pd
+	import numpy as np
+	import jieba
+	import jieba.posseg
+	import gensim
+	
+	# 返回特征词向量
+	def getWordVecs(wordList, model):
+	    name = []
+	    vecs = []
+	    for word in wordList:
+	        word = word.replace('\n', '')
+	        try:
+	            if word in model:  # 模型中存在该词的向量表示
+	                name.append(word)
+	                vecs.append(model[word])
+	        except KeyError:
+	            continue
+	    a = pd.DataFrame(name, columns=['word'])
+	    b = pd.DataFrame(np.array(vecs, dtype='float'))
+	    return pd.concat([a, b], axis=1)
+	
+	# 数据预处理操作：分词，去停用词，词性筛选
+	def dataPrepos(text, stopkey):
+	    l = []
+	    pos = ['n', 'nz', 'v', 'vd', 'vn', 'l', 'a', 'd']  # 定义选取的词性
+	    seg = jieba.posseg.cut(text)  # 分词
+	    for i in seg:
+	        if i.word not in l and i.word not in stopkey and i.flag in pos:  # 去重 + 去停用词 + 词性筛选
+	            # print i.word
+	            l.append(i.word)
+	    return l
+	
+	# 根据数据获取候选关键词词向量
+	def buildAllWordsVecs(data, stopkey, model):
+	    idList, titleList, abstractList = data['id'], data['title'], data['abstract']
+	    for index in range(len(idList)):
+	        id = idList[index]
+	        title = titleList[index]
+	        abstract = abstractList[index]
+	        l_ti = dataPrepos(title, stopkey)  # 处理标题
+	        l_ab = dataPrepos(abstract, stopkey)  # 处理摘要
+	        # 获取候选关键词的词向量
+	        words = np.append(l_ti, l_ab)  # 拼接数组元素
+	        words = list(set(words))  # 数组元素去重,得到候选关键词列表
+	        wordvecs = getWordVecs(words, model)  # 获取候选关键词的词向量表示
+	        # 词向量写入csv文件，每个词400维
+	        data_vecs = pd.DataFrame(wordvecs)
+	        data_vecs.to_csv('result/vecs/wordvecs_' + str(id) + '.csv', index=False)
+	        print("document ", id, " well done.")
+	
+	def main():
+	    # 读取数据集
+	    dataFile = 'data/sample_data.csv'
+	    data = pd.read_csv(dataFile)
+	    # 停用词表
+	    stopkey = [w.strip() for w in codecs.open('data/stopWord.txt', 'r').readlines()]
+	    # 词向量模型
+	    inp = 'wiki.zh.text.vector'
+	    model = gensim.models.KeyedVectors.load_word2vec_format(inp, binary=False)
+	    buildAllWordsVecs(data, stopkey, model)
+	
+	if __name__ == '__main__':
+	    main()
+源代码2如下：
+
+ 	# 采用Word2Vec词聚类方法抽取关键词2——根据候选关键词的词向量进行聚类分析
+	import sys,os
+	from sklearn.cluster import KMeans
+	from sklearn.decomposition import PCA
+	import pandas as pd
+	import numpy as np
+	import matplotlib.pyplot as plt
+	import math
+	import os
+	
+	# 对词向量采用K-means聚类抽取TopK关键词
+	def getkeywords_kmeans(data,topK):
+	    words = data["word"] # 词汇
+	    vecs = data.iloc[:,1:] # 向量表示
+	
+	    kmeans = KMeans(n_clusters=1,n_init=10,random_state=10).fit(vecs)
+	    labels = kmeans.labels_ #类别结果标签
+	    labels = pd.DataFrame(labels,columns=['label'])
+	    new_df = pd.concat([labels,vecs],axis=1)
+	    df_count_type = new_df.groupby('label').size() #各类别统计个数
+	    # print df_count_type
+	    vec_center = kmeans.cluster_centers_ #聚类中心
+	
+	    # 计算距离（相似性） 采用欧几里得距离（欧式距离）
+	    distances = []
+	    vec_words = np.array(vecs) # 候选关键词向量，dataFrame转array
+	    vec_center = vec_center[0] # 第一个类别聚类中心,本例只有一个类别
+	    length = len(vec_center) # 向量维度
+	    for index in range(len(vec_words)): # 候选关键词个数
+	        cur_wordvec = vec_words[index] # 当前词语的词向量
+	        dis = 0 # 向量距离
+	        for index2 in range(length):
+	            dis += (vec_center[index2]-cur_wordvec[index2])*(vec_center[index2]-cur_wordvec[index2])
+	        dis = math.sqrt(dis)
+	        distances.append(dis)
+	    distances = pd.DataFrame(distances,columns=['dis'])
+	
+	    result = pd.concat([words, labels ,distances], axis=1) # 拼接词语与其对应中心点的距离
+	    result = result.sort_values(by="dis",ascending = True) # 按照距离大小进行升序排序
+	    """
+	    # 将用于聚类的数据的特征维度降到2维
+	    pca = PCA(n_components=2)
+	    new_pca = pd.DataFrame(pca.fit_transform(new_df))
+	    print(new_pca)
+	    # 可视化
+	    d = new_pca[new_df['label'] == 0]
+	    plt.plot(d[0],d[1],'r.')
+	    d = new_pca[new_df['label'] == 1]
+	    plt.plot(d[0], d[1], 'go')
+	    d = new_pca[new_df['label'] == 2]
+	    plt.plot(d[0], d[1], 'b*')
+	    plt.gcf().savefig('kmeans.png')
+	    plt.show()
+	    """
+	    # 抽取排名前topK个词语作为文本关键词
+	    wordlist = np.array(result['word']) # 选择词汇列并转成数组格式
+	    word_split = [wordlist[x] for x in range(0,topK)] # 抽取前topK个词汇
+	    word_split = " ".join(word_split)
+	    return word_split
+	
+	def main():
+	    # 读取数据集
+	    dataFile = 'data/sample_data.csv'
+	    articleData = pd.read_csv(dataFile,encoding='utf-8')
+	    
+	    ids, titles, keys = [], [], []
+	
+	    rootdir = "result/vecs" # 词向量文件根目录
+	    fileList = os.listdir(rootdir) #列出文件夹下所有的目录与文件
+	    # 遍历文件
+	    for i in range(len(fileList)):
+	        filename = fileList[i]
+	        path = os.path.join(rootdir,filename)
+	        if os.path.isfile(path):
+	            data = pd.read_csv(path, encoding='utf-8') # 读取词向量文件数据
+	            artile_keys = getkeywords_kmeans(data,10) # 聚类算法得到当前文件的关键词
+	            
+	            # 根据文件名获得文章id以及标题
+	            (shortname, extension) = os.path.splitext(filename) # 得到文件名和文件扩展名
+	            t = shortname.split("_")
+	            article_id = int(t[len(t)-1]) # 获得文章id
+	            artile_tit = articleData[articleData.id==article_id]['title'] # 获得文章标题
+	            artile_tit = list(artile_tit)[0] # series转成字符串
+	            ids.append(article_id)
+	            titles.append(artile_tit)
+	            keys.append(artile_keys)
+	    # 所有结果写入文件
+	    result = pd.DataFrame({"id": ids, "title": titles, "key": keys}, columns=['id', 'title', 'key'])
+	    result = result.sort_values(by="id",ascending=True) # 排序
+	    result.to_csv("result/keys_word2vec.csv", index=False,encoding='utf-8')
+	
+	if __name__ == '__main__':
+	    main()
 
   最终运行结果如下图所示。
 
